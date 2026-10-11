@@ -1,5 +1,5 @@
 CIS 457 - Socket Programming Project
-
+Names: Jeniffer, Ipek, Lavisha
 Project Description:
 This project uses Python socket programming to establish a TCP connection between a client and a server. Both programs allow users to type and exchange messages.
 
