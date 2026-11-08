@@ -8,11 +8,13 @@ HEADERSIZE = 64
 serverPort = 19000
 
 def send(sock, text):
+    """Send one message: header (length) + the message itself."""
     data = text.encode('utf-8')
     header = str(len(data)).encode('utf-8').ljust(HEADERSIZE)
     sock.sendall(header + data)
 
 def recv_exact(sock, n):
+    """Read exactly n bytes. Return None if the other side closed."""
     data = b''
     while len(data) < n:
         chunk = sock.recv(n-len(data))
@@ -22,10 +24,12 @@ def recv_exact(sock, n):
     return data
 
 def stop_server():
+    """Stop the server when the client disconnects."""
     # Send Ctrl+C to our own program. This wakes the main thread from input().
     os.kill(os.getpid(), signal.SIGINT)
 
 def receive_loop(sock):
+    """Listen for messages forever."""
     while True:
         header = recv_exact(sock, HEADERSIZE)
         if header is None:
@@ -61,8 +65,10 @@ receiver.start()
 # Main thread
 try:
     while True:
+# infinite loop: read what the user types and send it
         reply = input()
         if reply:
+# ignore empty lines
             send(connectionSocket, reply)
 except(KeyboardInterrupt, EOFError, OSError):
     pass
