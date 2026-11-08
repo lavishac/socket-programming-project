@@ -1,5 +1,7 @@
 from socket import *
 import threading
+import os
+import signal
 
 # Fixed header size for messages.
 HEADERSIZE = 64
@@ -19,21 +21,28 @@ def recv_exact(sock, n):
         data += chunk
     return data
 
+def stop_server():
+    # Send Ctrl+C to our own program. This wakes the main thread from input().
+    os.kill(os.getpid(), signal.SIGINT)
+
 def receive_loop(sock):
     while True:
         header = recv_exact(sock, HEADERSIZE)
         if header is None:
             print('\nClient disconnected.')
+            stop_server()
             break
         msg_length = int(header.decode('utf-8').strip())
         msg = recv_exact(sock, msg_length)
         if msg is None:
             print('\nClient disconnected.')
+            stop_server()
             break
         print('\nFrom client:', msg.decode('utf-8'))
 
 # Create a TCP socket.
-serverSocket = socket(AF_INET,SOCK_STREAM)
+serverSocket = socket(AF_INET, SOCK_STREAM)
+serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)  # allow reusing the port right away
 
 # Assign the socket a port on this computer.
 serverSocket.bind(('',serverPort))
@@ -49,7 +58,7 @@ print(f'Connected to client at {addr}')
 receiver = threading.Thread(target=receive_loop, args=(connectionSocket,), daemon = True)
 receiver.start()
 
-#Main thread
+# Main thread
 try:
     while True:
         reply = input()
@@ -62,17 +71,3 @@ finally:
     serverSocket.close()
 
     print('Server closed.')
-
-# # Receive and display the client's message.
-# sentence = connectionSocket.recv(1024).decode()
-# print('From client:', sentence)
-
-# # Let the server user type a reply.
-# reply = input('Message to client: ')
-
-# # Send the reply to the client.
-# connectionSocket.sendall(reply.encode())
-
-# # Close both sockets after exchanging messages.
-# connectionSocket.close()
-# serverSocket.close()
